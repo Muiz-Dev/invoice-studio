@@ -8,7 +8,9 @@ export async function POST(request: NextRequest) {
   try {
     const payload = (await request.json()) as InvoicePayload;
     const html = buildInvoiceHtml(payload);
-    const browser = await chromium.launch();
+    const browser = await chromium.launch({
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "load" });
     const pdfBuffer = await page.pdf({
