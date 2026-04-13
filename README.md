@@ -17,7 +17,7 @@ A clean, client-ready invoice builder with live preview, signatures, and profess
 - Next.js (App Router)
 - React + TypeScript
 - Tailwind CSS
-- Playwright (server-side PDF rendering)
+- React PDF (server-side PDF rendering)
 
 ## Getting Started
 
@@ -35,13 +35,9 @@ npm run dev
 
 Open `http://localhost:3000` to view the app.
 
-## PDF Export (Important)
+## PDF Export
 
-The Download PDF button uses Playwright on the server. Install the browsers once:
-
-```bash
-npx playwright install
-```
+The Download PDF button uses `@react-pdf/renderer` on the server, so there is no browser install step required.
 
 ## Scripts
 

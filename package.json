@@ -4,7 +4,6 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "postinstall": "playwright install chromium",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
@@ -17,11 +16,11 @@
     "@mui/material": "^9.0.0",
     "@mui/x-date-pickers": "^9.0.0",
     "@prisma/client": "^7.7.0",
+    "@react-pdf/renderer": "^4.4.1",
     "@tabler/icons-react": "^3.41.1",
     "cropperjs": "^2.1.1",
     "date-fns": "^4.1.0",
     "next": "16.2.3",
-    "playwright": "^1.59.1",
     "prisma": "^7.7.0",
     "react": "19.2.4",
     "react-cropper": "^2.3.3",
