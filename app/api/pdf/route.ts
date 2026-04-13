@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     const invoiceNumber = payload.invoice?.invoiceNumber || "invoice";
     const safeName = invoiceNumber.replace(/[^a-z0-9-_]+/gi, "-");
 
-    return new Response(pdfBuffer, {
+    return new Response(new Uint8Array(pdfBuffer), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
