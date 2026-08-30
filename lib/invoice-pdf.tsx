@@ -10,6 +10,7 @@ import {
 } from "@react-pdf/renderer";
 import {
   computeInvoiceTotals,
+  formatBankDetails,
   formatMoney,
   getInvoiceTemplate,
   type InvoicePayload,
@@ -117,6 +118,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 1.15,
     fontFamily: "Times-Bold",
+  },
+  partyTin: {
+    marginTop: 3,
+    fontSize: 9,
+    fontFamily: "Courier",
+    color: "#4b5563",
   },
   tableHeader: {
     flexDirection: "row",
@@ -259,12 +266,14 @@ function PdfPartyBlock({
   ctx,
   label,
   name,
+  tin,
   lines,
   serif = false,
 }: {
   ctx: PdfContext;
   label: string;
   name?: string;
+  tin?: string;
   lines: string[];
   serif?: boolean;
 }) {
@@ -280,6 +289,7 @@ function PdfPartyBlock({
       >
         {name || "-"}
       </Text>
+      {tin ? <Text style={styles.partyTin}>TIN: {tin}</Text> : null}
       {(lines.length ? lines : ["-"]).map((line) => (
         <Text key={`${label}-${line}`} style={styles.body}>
           {line}
@@ -394,12 +404,15 @@ function PdfSupport({
   ctx: PdfContext;
   signatureFirst?: boolean;
 }) {
+  const bankInfo = formatBankDetails(ctx.invoice);
+  const paymentValue = bankInfo || ctx.invoice.paymentDetails;
+
   const blocks = [
-    ctx.invoice.showPaymentDetails && ctx.invoice.paymentDetails?.trim()
+    ctx.invoice.showPaymentDetails && paymentValue?.trim()
       ? {
           key: "payment",
-          title: "Payment details",
-          value: ctx.invoice.paymentDetails,
+          title: "Bank & Payment Details",
+          value: paymentValue,
         }
       : null,
     ctx.invoice.paymentReference?.trim()
@@ -412,7 +425,7 @@ function PdfSupport({
     ctx.invoice.showNotes && ctx.invoice.notes?.trim()
       ? {
           key: "notes",
-          title: "Notes",
+          title: "Notes & Terms",
           value: ctx.invoice.notes,
         }
       : null,
@@ -451,7 +464,7 @@ function PdfSupport({
     <View key={block.key} style={{ marginBottom: 14 }}>
       <PdfLabel ctx={ctx}>{block.title}</PdfLabel>
       {splitLines(block.value).map((line) => (
-        <Text key={`${block.key}-${line}`} style={{ ...styles.body, marginTop: 6 }}>
+        <Text key={`${block.key}-${line}`} style={{ ...styles.body, marginTop: 4 }}>
           {line}
         </Text>
       ))}
@@ -470,7 +483,7 @@ function PdfSupport({
 
 function PdfSummary({
   ctx,
-  heading = "Settlement",
+  heading = "Summary",
   large = false,
 }: {
   ctx: PdfContext;
@@ -497,7 +510,7 @@ function PdfSummary({
           </Text>
         </View>
         <View style={styles.summaryRow}>
-          <Text style={styles.summaryLabel}>Tax ({ctx.invoice.taxRate}%)</Text>
+          <Text style={styles.summaryLabel}>VAT ({ctx.invoice.taxRate}%)</Text>
           <Text style={styles.summaryValue}>
             {formatMoney(ctx.taxAmount, ctx.invoice.currency)}
           </Text>
@@ -542,7 +555,7 @@ function renderLedger(ctx: PdfContext) {
         }}
       >
         <View style={{ flex: 1 }}>
-          <PdfLabel ctx={ctx}>Invoice</PdfLabel>
+          <PdfLabel ctx={ctx}>Tax Invoice</PdfLabel>
           <Text style={{ ...styles.title, color: ctx.template.accent, marginTop: 10 }}>
             {ctx.invoice.invoiceNumber || "Draft invoice"}
           </Text>
@@ -591,8 +604,9 @@ function renderLedger(ctx: PdfContext) {
       >
         <PdfPartyBlock
           ctx={ctx}
-          label="From"
+          label="Billed By"
           name={ctx.invoice.businessName}
+          tin={ctx.invoice.businessTin}
           lines={[
             ...splitLines(ctx.invoice.businessAddress),
             ctx.invoice.businessEmail || "",
@@ -602,7 +616,7 @@ function renderLedger(ctx: PdfContext) {
         <View style={{ width: 26 }} />
         <PdfPartyBlock
           ctx={ctx}
-          label="Bill to"
+          label="Billed To"
           name={ctx.invoice.clientName}
           lines={[ctx.invoice.clientEmail || "", ...splitLines(ctx.invoice.clientAddress)].filter(
             Boolean
@@ -621,11 +635,7 @@ function renderLedger(ctx: PdfContext) {
         }}
       >
         <PdfSupport ctx={ctx} />
-        <View
-          style={{
-            width: 24,
-          }}
-        />
+        <View style={{ width: 24 }} />
         <View
           style={{
             flex: 0.85,
@@ -653,7 +663,7 @@ function renderEditorial(ctx: PdfContext) {
       >
         <View style={{ flexDirection: "row" }}>
           <View style={{ flex: 1.15 }}>
-            <PdfLabel ctx={ctx}>Invoice</PdfLabel>
+            <PdfLabel ctx={ctx}>Tax Invoice</PdfLabel>
             <Text
               style={{
                 ...styles.titleSerif,
@@ -706,8 +716,9 @@ function renderEditorial(ctx: PdfContext) {
       <View style={{ flexDirection: "row", paddingTop: 24, paddingBottom: 28 }}>
         <PdfPartyBlock
           ctx={ctx}
-          label="From"
+          label="Billed By"
           name={ctx.invoice.businessName}
+          tin={ctx.invoice.businessTin}
           lines={[
             ...splitLines(ctx.invoice.businessAddress),
             ctx.invoice.businessEmail || "",
@@ -718,7 +729,7 @@ function renderEditorial(ctx: PdfContext) {
         <View style={{ width: 30 }} />
         <PdfPartyBlock
           ctx={ctx}
-          label="Bill to"
+          label="Billed To"
           name={ctx.invoice.clientName}
           lines={[ctx.invoice.clientEmail || "", ...splitLines(ctx.invoice.clientAddress)].filter(
             Boolean
@@ -774,13 +785,9 @@ function renderModern(ctx: PdfContext) {
         }}
       >
         <View style={{ flex: 1.1 }}>
-          <PdfLabel ctx={ctx}>Studio invoice</PdfLabel>
+          <PdfLabel ctx={ctx}>Tax Invoice</PdfLabel>
           <Text style={{ ...styles.title, color: ctx.template.accent, marginTop: 10 }}>
             {ctx.invoice.invoiceNumber || "Draft invoice"}
-          </Text>
-          <Text style={{ ...styles.body, marginTop: 12 }}>
-            A sharper invoice composition for product, studio, and design-driven
-            businesses.
           </Text>
         </View>
         <View style={{ width: 24 }} />
@@ -819,8 +826,9 @@ function renderModern(ctx: PdfContext) {
       <View style={{ flexDirection: "row", paddingTop: 22, paddingBottom: 22 }}>
         <PdfPartyBlock
           ctx={ctx}
-          label="From"
+          label="Billed By"
           name={ctx.invoice.businessName}
+          tin={ctx.invoice.businessTin}
           lines={[
             ...splitLines(ctx.invoice.businessAddress),
             ctx.invoice.businessEmail || "",
@@ -830,7 +838,7 @@ function renderModern(ctx: PdfContext) {
         <View style={{ width: 26 }} />
         <PdfPartyBlock
           ctx={ctx}
-          label="Bill to"
+          label="Billed To"
           name={ctx.invoice.clientName}
           lines={[ctx.invoice.clientEmail || "", ...splitLines(ctx.invoice.clientAddress)].filter(
             Boolean
@@ -870,7 +878,7 @@ function renderWarm(ctx: PdfContext) {
       >
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end" }}>
           <View style={{ flex: 1 }}>
-            <PdfLabel ctx={ctx}>Service invoice</PdfLabel>
+            <PdfLabel ctx={ctx}>Tax Invoice</PdfLabel>
             <Text style={{ ...styles.partyName, color: ctx.template.accent, marginTop: 12 }}>
               {ctx.invoice.businessName || "-"}
             </Text>
@@ -893,8 +901,9 @@ function renderWarm(ctx: PdfContext) {
       <View style={{ flexDirection: "row", paddingTop: 22, paddingBottom: 22 }}>
         <PdfPartyBlock
           ctx={ctx}
-          label="From"
+          label="Billed By"
           name={ctx.invoice.businessName}
+          tin={ctx.invoice.businessTin}
           lines={[
             ...splitLines(ctx.invoice.businessAddress),
             ctx.invoice.businessEmail || "",
@@ -905,7 +914,7 @@ function renderWarm(ctx: PdfContext) {
         <View style={{ flex: 1 }}>
           <PdfPartyBlock
             ctx={ctx}
-            label="Bill to"
+            label="Billed To"
             name={ctx.invoice.clientName}
             lines={[ctx.invoice.clientEmail || "", ...splitLines(ctx.invoice.clientAddress)].filter(
               Boolean
@@ -973,7 +982,7 @@ function renderContractor(ctx: PdfContext) {
       >
         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
           <View>
-            <PdfLabel ctx={ctx}>Contractor invoice</PdfLabel>
+            <PdfLabel ctx={ctx}>Tax Invoice</PdfLabel>
             <Text style={{ ...styles.title, color: ctx.template.accent, marginTop: 10 }}>
               {ctx.invoice.invoiceNumber || "Draft invoice"}
             </Text>
@@ -1023,6 +1032,7 @@ function renderContractor(ctx: PdfContext) {
           ctx={ctx}
           label="Supplier"
           name={ctx.invoice.businessName}
+          tin={ctx.invoice.businessTin}
           lines={[
             ...splitLines(ctx.invoice.businessAddress),
             ctx.invoice.businessEmail || "",
@@ -1079,7 +1089,7 @@ function renderStatement(ctx: PdfContext) {
       >
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end" }}>
           <View>
-            <PdfLabel ctx={ctx}>Statement invoice</PdfLabel>
+            <PdfLabel ctx={ctx}>Statement Tax Invoice</PdfLabel>
             <Text style={{ ...styles.partyName, color: ctx.template.accent, marginTop: 12 }}>
               {ctx.invoice.businessName || "-"}
             </Text>
@@ -1128,6 +1138,7 @@ function renderStatement(ctx: PdfContext) {
           ctx={ctx}
           label="Supplier"
           name={ctx.invoice.businessName}
+          tin={ctx.invoice.businessTin}
           lines={[
             ...splitLines(ctx.invoice.businessAddress),
             ctx.invoice.businessEmail || "",
@@ -1137,7 +1148,7 @@ function renderStatement(ctx: PdfContext) {
         <View style={{ width: 26 }} />
         <PdfPartyBlock
           ctx={ctx}
-          label="Account billed"
+          label="Billed Account"
           name={ctx.invoice.clientName}
           lines={[ctx.invoice.clientEmail || "", ...splitLines(ctx.invoice.clientAddress)].filter(
             Boolean

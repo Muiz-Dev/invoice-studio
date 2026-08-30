@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import {
   computeInvoiceTotals,
+  formatBankDetails,
   formatMoney,
   getInvoiceTemplate,
   type InvoiceDraft,
@@ -41,7 +42,7 @@ function Label({
 }) {
   return (
     <p
-      className={`text-[0.62rem] uppercase tracking-[0.3em] ${className}`}
+      className={`text-[0.62rem] uppercase tracking-[0.3em] font-semibold ${className}`}
       style={{ color }}
     >
       {children}
@@ -53,12 +54,14 @@ function PartyBlock({
   label,
   name,
   lines,
+  tin,
   template,
   editorial = false,
 }: {
   label: string;
   name?: string;
   lines: string[];
+  tin?: string;
   template: PreviewContext["template"];
   editorial?: boolean;
 }) {
@@ -66,13 +69,18 @@ function PartyBlock({
     <div>
       <Label color={template.labelTone}>{label}</Label>
       <p
-        className={`mt-4 break-words text-[1.18rem] leading-tight ${
-          editorial ? "font-serif" : "font-semibold"
+        className={`mt-3 break-words text-lg leading-tight ${
+          editorial ? "font-serif font-bold" : "font-bold"
         } ${template.previewHeadingClass}`}
       >
         {name || "-"}
       </p>
-      <div className={`mt-3 space-y-1 text-sm leading-6 ${template.previewBodyClass}`}>
+      {tin ? (
+        <p className={`mt-1 text-xs font-mono font-medium ${template.previewBodyClass}`}>
+          TIN: {tin}
+        </p>
+      ) : null}
+      <div className={`mt-2 space-y-0.5 text-sm leading-relaxed ${template.previewBodyClass}`}>
         {lines.length ? lines.map((line) => <p key={`${label}-${line}`}>{line}</p>) : <p>-</p>}
       </div>
     </div>
@@ -93,10 +101,10 @@ function LineItemTable({
   const { template, items, invoice } = ctx;
 
   return (
-    <section className={compact ? "py-5" : "py-7"}>
+    <section className={compact ? "py-4" : "py-6"}>
       <div
-        className={`grid grid-cols-[1.5fr_0.55fr_0.75fr_0.8fr] gap-4 pb-3 ${
-          strongHeader ? "border-y border-black/10 py-3" : "border-b border-black/10"
+        className={`grid grid-cols-[1.5fr_0.55fr_0.75fr_0.8fr] gap-4 pb-2.5 ${
+          strongHeader ? "border-y border-stone-200 py-2.5 px-3" : "border-b border-stone-200"
         }`}
         style={strongHeader ? { backgroundColor: template.accentSoft } : undefined}
       >
@@ -112,15 +120,15 @@ function LineItemTable({
         </Label>
       </div>
 
-      <div className={openRows ? "space-y-4 pt-4" : "divide-y divide-black/10"}>
+      <div className={openRows ? "space-y-3 pt-3" : "divide-y divide-stone-200/80"}>
         {items.map((item) => (
           <div
             key={item.id}
             className={`grid grid-cols-[1.5fr_0.55fr_0.75fr_0.8fr] gap-4 ${
-              openRows ? "" : "py-4"
+              openRows ? "" : "py-3"
             }`}
           >
-            <p className={`text-sm leading-6 ${template.previewHeadingClass}`}>
+            <p className={`text-sm leading-relaxed font-medium ${template.previewHeadingClass}`}>
               {item.description}
             </p>
             <p className={`text-right text-sm ${template.previewBodyClass}`}>
@@ -129,7 +137,7 @@ function LineItemTable({
             <p className={`text-right text-sm ${template.previewBodyClass}`}>
               {formatMoney(item.rate, invoice.currency)}
             </p>
-            <p className={`text-right text-sm ${template.previewHeadingClass}`}>
+            <p className={`text-right text-sm font-semibold ${template.previewHeadingClass}`}>
               {formatMoney(item.quantity * item.rate, invoice.currency)}
             </p>
           </div>
@@ -149,26 +157,27 @@ function SupportSections({
   signatureOnTop?: boolean;
 }) {
   const { invoice, template } = ctx;
+  const bankText = formatBankDetails(invoice);
 
   const blocks = [
-    invoice.showPaymentDetails && invoice.paymentDetails.trim()
+    invoice.showPaymentDetails && bankText?.trim()
       ? {
           key: "payment",
-          title: "Payment details",
-          content: invoice.paymentDetails,
+          title: "Bank & Payment Details",
+          content: bankText,
         }
       : null,
     (invoice.paymentReference || "").trim()
       ? {
           key: "reference",
-          title: "Payment reference",
+          title: "Payment Reference",
           content: invoice.paymentReference,
         }
       : null,
-    invoice.showNotes && invoice.notes.trim()
+    invoice.showNotes && invoice.notes?.trim()
       ? {
           key: "notes",
-          title: "Notes",
+          title: "Notes & Terms",
           content: invoice.notes,
         }
       : null,
@@ -176,25 +185,25 @@ function SupportSections({
 
   const signatureBlock = invoice.showSignature ? (
     <div key="signature" className={signatureOnTop ? "" : "pt-1"}>
-      <Label color={template.labelTone}>Authorized signature</Label>
-      <div className="mt-4 flex flex-col items-start">
+      <Label color={template.labelTone}>Authorized Signature</Label>
+      <div className="mt-3 flex flex-col items-start">
         {invoice.signatureDataUrl ? (
           <img
             src={invoice.signatureDataUrl}
             alt="Signature"
-            className="h-14 w-auto object-contain"
+            className="h-12 w-auto object-contain"
           />
         ) : (
-          <div className="h-8 w-32 border-b border-black/25" />
+          <div className="h-8 w-32 border-b border-stone-400" />
         )}
         <p
-          className={`mt-3 text-sm ${
-            template.id === "editorial" ? "font-serif text-base" : "font-semibold"
+          className={`mt-2 text-sm ${
+            template.id === "editorial" ? "font-serif text-base font-bold" : "font-bold"
           } ${template.previewHeadingClass}`}
         >
           {invoice.signatureName}
         </p>
-        <p className={`text-xs uppercase tracking-[0.22em] ${template.previewBodyClass}`}>
+        <p className={`text-[10px] uppercase tracking-widest font-medium ${template.previewBodyClass}`}>
           {invoice.signatureTitle}
         </p>
       </div>
@@ -205,7 +214,7 @@ function SupportSections({
     <div key={block.key}>
       <Label color={template.labelTone}>{block.title}</Label>
       <p
-        className={`mt-3 whitespace-pre-line text-sm leading-7 ${template.previewBodyClass}`}
+        className={`mt-2 whitespace-pre-line text-xs leading-relaxed font-medium ${template.previewBodyClass}`}
       >
         {block.content}
       </p>
@@ -226,7 +235,7 @@ function SupportSections({
 function SummaryBlock({
   ctx,
   large = false,
-  heading = "Settlement",
+  heading = "Summary",
 }: {
   ctx: PreviewContext;
   large?: boolean;
@@ -235,34 +244,34 @@ function SummaryBlock({
   const { template, subtotal, taxAmount, total, invoice } = ctx;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <Label color={template.labelTone}>{heading}</Label>
-      <div className="space-y-3 text-sm">
+      <div className="space-y-2 text-xs">
         <div className="flex items-center justify-between">
           <span className={template.previewBodyClass}>Subtotal</span>
-          <span className={template.previewHeadingClass}>
+          <span className={`font-medium ${template.previewHeadingClass}`}>
             {formatMoney(subtotal, invoice.currency)}
           </span>
         </div>
         <div className="flex items-center justify-between">
           <span className={template.previewBodyClass}>
-            Tax ({invoice.taxRate}%)
+            VAT ({invoice.taxRate}%)
           </span>
-          <span className={template.previewHeadingClass}>
+          <span className={`font-medium ${template.previewHeadingClass}`}>
             {formatMoney(taxAmount, invoice.currency)}
           </span>
         </div>
       </div>
-      <div className="border-t border-black/10 pt-4">
+      <div className="border-t border-stone-200 pt-3">
         <p
-          className={`${large ? "text-[2rem]" : "text-2xl"} leading-none ${
-            template.id === "editorial" ? "font-serif tracking-[-0.04em]" : "font-semibold tracking-[-0.05em]"
+          className={`${large ? "text-2xl" : "text-xl"} leading-none font-extrabold ${
+            template.id === "editorial" ? "font-serif" : ""
           } ${template.previewHeadingClass}`}
           style={{ color: template.accent }}
         >
           {formatMoney(total, invoice.currency)}
         </p>
-        <p className={`mt-2 text-sm ${template.previewBodyClass}`}>
+        <p className={`mt-2 text-xs font-medium ${template.previewBodyClass}`}>
           {joinBlock(invoice.status, `Due ${invoice.dueDate || "-"}`)}
         </p>
       </div>
@@ -275,44 +284,37 @@ function renderLedger(ctx: PreviewContext) {
 
   return (
     <>
-      <header className="border-b border-black/10 pb-7">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-          <div className="max-w-xl">
-            <Label color={template.labelTone} className="tracking-[0.34em]">
-              Invoice
-            </Label>
+      <header className="border-b border-stone-200 pb-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <Label color={template.labelTone}>Tax Invoice</Label>
             <h1
-              className={`mt-3 break-words text-[clamp(2rem,4vw,3.4rem)] leading-none font-semibold tracking-[-0.05em] ${template.previewHeadingClass}`}
+              className={`mt-2 break-words text-3xl font-extrabold tracking-tight ${template.previewHeadingClass}`}
             >
-              {invoice.invoiceNumber || "Draft invoice"}
+              {invoice.invoiceNumber || "Draft Invoice"}
             </h1>
-            <div
-              className={`mt-5 space-y-1 text-sm leading-6 ${template.previewBodyClass}`}
-            >
-              <p>Issued {invoice.issueDate || "-"}</p>
-              <p>Service date {invoice.serviceDate || "-"}</p>
-              <p>Due {invoice.dueDate || "-"}</p>
-              {invoice.status === "Paid" ? <p>Paid {invoice.paidDate || "-"}</p> : null}
+            <div className={`mt-3 space-y-0.5 text-xs ${template.previewBodyClass}`}>
+              <p>Issued: {invoice.issueDate || "-"}</p>
+              <p>Due: {invoice.dueDate || "-"}</p>
+              {invoice.status === "Paid" ? <p>Paid: {invoice.paidDate || "-"}</p> : null}
             </div>
           </div>
 
-          <div className="flex flex-col items-start gap-4 sm:items-end">
-            <div
-              className="inline-flex items-center border px-4 py-2 text-[0.62rem] uppercase tracking-[0.3em]"
+          <div className="flex flex-col items-start gap-3 sm:items-end">
+            <span
+              className="rounded px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider border"
               style={{
                 color: template.accent,
-                borderColor: `${template.accent}22`,
+                borderColor: `${template.accent}33`,
                 backgroundColor: template.accentSoft,
               }}
             >
               {invoice.status}
-            </div>
+            </span>
             <div className="text-left sm:text-right">
-              <Label color={template.labelTone} className="tracking-[0.28em]">
-                Total due
-              </Label>
+              <Label color={template.labelTone}>Total Due</Label>
               <p
-                className="mt-2 text-3xl font-semibold leading-none tracking-[-0.05em]"
+                className="mt-1 text-2xl font-bold tracking-tight"
                 style={{ color: template.accent }}
               >
                 {formatMoney(ctx.total, invoice.currency)}
@@ -322,10 +324,11 @@ function renderLedger(ctx: PreviewContext) {
         </div>
       </header>
 
-      <section className="grid gap-10 border-b border-black/10 py-7 sm:grid-cols-[1fr_1fr]">
+      <section className="grid gap-6 border-b border-stone-200 py-6 sm:grid-cols-2">
         <PartyBlock
-          label="From"
+          label="Billed By"
           name={invoice.businessName}
+          tin={invoice.businessTin}
           lines={[
             ...splitLines(invoice.businessAddress),
             invoice.businessEmail,
@@ -334,7 +337,7 @@ function renderLedger(ctx: PreviewContext) {
           template={template}
         />
         <PartyBlock
-          label="Bill to"
+          label="Billed To"
           name={invoice.clientName}
           lines={[invoice.clientEmail, ...splitLines(invoice.clientAddress)].filter(
             Boolean
@@ -345,9 +348,9 @@ function renderLedger(ctx: PreviewContext) {
 
       <LineItemTable ctx={ctx} />
 
-      <section className="grid gap-8 border-t border-black/10 pt-7 sm:grid-cols-[1.2fr_0.8fr]">
+      <section className="grid gap-6 border-t border-stone-200 pt-6 sm:grid-cols-[1.2fr_0.8fr]">
         <SupportSections ctx={ctx} />
-        <div className="space-y-4 border-t border-black/10 pt-5 sm:border-t-0 sm:border-l sm:pl-8 sm:pt-0">
+        <div className="border-t border-stone-200 pt-4 sm:border-t-0 sm:border-l sm:pl-6 sm:pt-0">
           <SummaryBlock ctx={ctx} />
         </div>
       </section>
@@ -360,56 +363,48 @@ function renderEditorial(ctx: PreviewContext) {
 
   return (
     <>
-      <header className="border-b border-black/10 pb-9">
-        <div className="grid gap-8 sm:grid-cols-[1.15fr_0.85fr]">
+      <header className="border-b border-stone-200 pb-7">
+        <div className="grid gap-6 sm:grid-cols-[1.15fr_0.85fr]">
           <div>
-            <Label color={template.labelTone} className="tracking-[0.36em]">
-              Invoice
-            </Label>
+            <Label color={template.labelTone}>Tax Invoice</Label>
             <h1
-              className={`mt-4 break-words font-serif text-[clamp(2.6rem,4.8vw,4.3rem)] leading-[0.92] tracking-[-0.05em] ${template.previewHeadingClass}`}
+              className={`mt-2 break-words font-serif text-3xl font-extrabold ${template.previewHeadingClass}`}
             >
-              {invoice.invoiceNumber || "Draft invoice"}
+              {invoice.invoiceNumber || "Draft Invoice"}
             </h1>
-            <p className={`mt-4 max-w-md text-sm leading-7 ${template.previewBodyClass}`}>
-              {invoice.businessName || "Business"} presents the billing record
-              for the work completed for {invoice.clientName || "this client"}.
+            <p className={`mt-2 text-xs leading-relaxed ${template.previewBodyClass}`}>
+              Billing statement from {invoice.businessName || "Business"} for{" "}
+              {invoice.clientName || "Client"}.
             </p>
           </div>
 
-          <div className="sm:pl-8 sm:border-l sm:border-black/10">
-            <div className="flex items-center justify-between">
+          <div className="sm:border-l sm:border-stone-200 sm:pl-6">
+            <div className="flex justify-between text-xs">
               <Label color={template.labelTone}>Issued</Label>
-              <p className={`text-sm ${template.previewHeadingClass}`}>
-                {invoice.issueDate || "-"}
-              </p>
+              <span className="font-semibold">{invoice.issueDate || "-"}</span>
             </div>
-            <div className="mt-3 flex items-center justify-between">
-              <Label color={template.labelTone}>Due</Label>
-              <p className={`text-sm ${template.previewHeadingClass}`}>
-                {invoice.dueDate || "-"}
-              </p>
+            <div className="mt-2 flex justify-between text-xs">
+              <Label color={template.labelTone}>Due Date</Label>
+              <span className="font-semibold">{invoice.dueDate || "-"}</span>
             </div>
-            <div className="mt-6 border-t border-black/10 pt-5">
-              <Label color={template.labelTone}>Total due</Label>
+            <div className="mt-4 border-t border-stone-200 pt-3">
+              <Label color={template.labelTone}>Total Due</Label>
               <p
-                className="mt-3 font-serif text-[2.4rem] leading-none tracking-[-0.05em]"
+                className="mt-1 font-serif text-2xl font-bold"
                 style={{ color: template.accent }}
               >
                 {formatMoney(ctx.total, invoice.currency)}
-              </p>
-              <p className={`mt-2 text-sm ${template.previewBodyClass}`}>
-                {invoice.status}
               </p>
             </div>
           </div>
         </div>
       </header>
 
-      <section className="grid gap-12 py-9 sm:grid-cols-[1fr_1fr]">
+      <section className="grid gap-8 py-7 sm:grid-cols-2">
         <PartyBlock
-          label="From"
+          label="Billed By"
           name={invoice.businessName}
+          tin={invoice.businessTin}
           lines={[
             ...splitLines(invoice.businessAddress),
             invoice.businessEmail,
@@ -419,7 +414,7 @@ function renderEditorial(ctx: PreviewContext) {
           editorial
         />
         <PartyBlock
-          label="Bill to"
+          label="Billed To"
           name={invoice.clientName}
           lines={[invoice.clientEmail, ...splitLines(invoice.clientAddress)].filter(
             Boolean
@@ -431,10 +426,10 @@ function renderEditorial(ctx: PreviewContext) {
 
       <LineItemTable ctx={ctx} openRows />
 
-      <section className="grid gap-10 border-t border-black/10 pt-8 sm:grid-cols-[1.1fr_0.9fr]">
+      <section className="grid gap-8 border-t border-stone-200 pt-6 sm:grid-cols-[1.1fr_0.9fr]">
         <SupportSections ctx={ctx} compact />
-        <div className="sm:pl-10 sm:border-l sm:border-black/10">
-          <SummaryBlock ctx={ctx} large heading="Settlement" />
+        <div className="sm:border-l sm:border-stone-200 sm:pl-8">
+          <SummaryBlock ctx={ctx} large />
         </div>
       </section>
     </>
@@ -446,59 +441,44 @@ function renderModern(ctx: PreviewContext) {
 
   return (
     <>
-      <div
-        className="h-3 w-24"
-        style={{ backgroundColor: template.accent }}
-      />
-      <header className="grid gap-8 border-b border-black/10 py-7 sm:grid-cols-[1.1fr_0.9fr]">
+      <div className="h-2 w-20 rounded" style={{ backgroundColor: template.accent }} />
+      <header className="grid gap-6 border-b border-stone-200 py-6 sm:grid-cols-[1.1fr_0.9fr]">
         <div>
-          <Label color={template.labelTone}>Studio invoice</Label>
+          <Label color={template.labelTone}>Tax Invoice</Label>
           <h1
-            className={`mt-4 break-words text-[clamp(2.4rem,4.8vw,4rem)] font-semibold leading-[0.92] tracking-[-0.06em] ${template.previewHeadingClass}`}
+            className={`mt-2 break-words text-3xl font-extrabold tracking-tight ${template.previewHeadingClass}`}
           >
-            {invoice.invoiceNumber || "Draft invoice"}
+            {invoice.invoiceNumber || "Draft Invoice"}
           </h1>
-          <p className={`mt-4 max-w-md text-sm leading-7 ${template.previewBodyClass}`}>
-            A sharp invoice composition built for product, branding, and studio
-            teams that want a more assertive document presence.
-          </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="border-l border-black/10 pl-4">
+        <div className="grid grid-cols-2 gap-3 text-xs">
+          <div>
             <Label color={template.labelTone}>Issued</Label>
-            <p className={`mt-2 text-sm ${template.previewHeadingClass}`}>
-              {invoice.issueDate || "-"}
-            </p>
+            <p className="mt-1 font-semibold">{invoice.issueDate || "-"}</p>
           </div>
-          <div className="border-l border-black/10 pl-4">
-            <Label color={template.labelTone}>Due</Label>
-            <p className={`mt-2 text-sm ${template.previewHeadingClass}`}>
-              {invoice.dueDate || "-"}
-            </p>
+          <div>
+            <Label color={template.labelTone}>Due Date</Label>
+            <p className="mt-1 font-semibold">{invoice.dueDate || "-"}</p>
           </div>
-          <div className="border-l border-black/10 pl-4">
+          <div>
             <Label color={template.labelTone}>Status</Label>
-            <p className={`mt-2 text-sm ${template.previewHeadingClass}`}>
-              {invoice.status}
-            </p>
+            <p className="mt-1 font-semibold">{invoice.status}</p>
           </div>
-          <div className="border-l border-black/10 pl-4">
-            <Label color={template.labelTone}>Total due</Label>
-            <p
-              className="mt-2 text-2xl font-semibold leading-none tracking-[-0.05em]"
-              style={{ color: template.accent }}
-            >
+          <div>
+            <Label color={template.labelTone}>Total Due</Label>
+            <p className="mt-1 font-bold text-sm" style={{ color: template.accent }}>
               {formatMoney(ctx.total, invoice.currency)}
             </p>
           </div>
         </div>
       </header>
 
-      <section className="grid gap-10 py-7 sm:grid-cols-[1.1fr_0.9fr]">
+      <section className="grid gap-8 py-6 sm:grid-cols-2">
         <PartyBlock
-          label="From"
+          label="Billed By"
           name={invoice.businessName}
+          tin={invoice.businessTin}
           lines={[
             ...splitLines(invoice.businessAddress),
             invoice.businessEmail,
@@ -507,7 +487,7 @@ function renderModern(ctx: PreviewContext) {
           template={template}
         />
         <PartyBlock
-          label="Bill to"
+          label="Billed To"
           name={invoice.clientName}
           lines={[invoice.clientEmail, ...splitLines(invoice.clientAddress)].filter(
             Boolean
@@ -518,10 +498,8 @@ function renderModern(ctx: PreviewContext) {
 
       <LineItemTable ctx={ctx} strongHeader />
 
-      <section className="grid gap-10 border-t border-black/10 pt-7 sm:grid-cols-[0.95fr_1.05fr]">
-        <div className="pt-1">
-          <SummaryBlock ctx={ctx} heading="Balance" />
-        </div>
+      <section className="grid gap-8 border-t border-stone-200 pt-6 sm:grid-cols-[0.95fr_1.05fr]">
+        <SummaryBlock ctx={ctx} />
         <SupportSections ctx={ctx} />
       </section>
     </>
@@ -533,35 +511,31 @@ function renderWarm(ctx: PreviewContext) {
 
   return (
     <>
-      <header className="border-b border-black/10 pb-7">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+      <header className="border-b border-stone-200 pb-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <Label color={template.labelTone}>Service invoice</Label>
-            <p
-              className={`mt-4 text-[1.35rem] font-semibold leading-tight ${template.previewHeadingClass}`}
-            >
+            <Label color={template.labelTone}>Tax Invoice</Label>
+            <p className={`mt-2 text-lg font-bold ${template.previewHeadingClass}`}>
               {invoice.businessName || "-"}
             </p>
-            <h1
-              className={`mt-3 break-words text-[clamp(2rem,4vw,3.1rem)] font-semibold leading-[0.96] tracking-[-0.05em] ${template.previewHeadingClass}`}
-            >
-              {invoice.invoiceNumber || "Draft invoice"}
+            <h1 className={`mt-1 text-2xl font-extrabold ${template.previewHeadingClass}`}>
+              {invoice.invoiceNumber || "Draft Invoice"}
             </h1>
           </div>
-          <div className="max-w-xs">
-            <Label color={template.labelTone}>This invoice covers</Label>
-            <p className={`mt-3 text-sm leading-7 ${template.previewBodyClass}`}>
-              Work delivered for {invoice.clientName || "the client"}, due on{" "}
-              {invoice.dueDate || "-"}.
+          <div className="text-left sm:text-right">
+            <Label color={template.labelTone}>Amount Due</Label>
+            <p className="mt-1 text-2xl font-bold" style={{ color: template.accent }}>
+              {formatMoney(ctx.total, invoice.currency)}
             </p>
           </div>
         </div>
       </header>
 
-      <section className="grid gap-8 py-7 sm:grid-cols-[1fr_1fr]">
+      <section className="grid gap-6 py-6 sm:grid-cols-2">
         <PartyBlock
-          label="From"
+          label="Billed By"
           name={invoice.businessName}
+          tin={invoice.businessTin}
           lines={[
             ...splitLines(invoice.businessAddress),
             invoice.businessEmail,
@@ -569,32 +543,22 @@ function renderWarm(ctx: PreviewContext) {
           ].filter(Boolean) as string[]}
           template={template}
         />
-        <div className="space-y-6">
-          <PartyBlock
-            label="Bill to"
-            name={invoice.clientName}
-            lines={[invoice.clientEmail, ...splitLines(invoice.clientAddress)].filter(
-              Boolean
-            ) as string[]}
-            template={template}
-          />
-          <div className="border-t border-black/10 pt-5">
-            <Label color={template.labelTone}>Invoice details</Label>
-            <div className={`mt-3 space-y-1 text-sm leading-7 ${template.previewBodyClass}`}>
-              <p>Issued {invoice.issueDate || "-"}</p>
-              <p>Service date {invoice.serviceDate || "-"}</p>
-              <p>{invoice.status}</p>
-            </div>
-          </div>
-        </div>
+        <PartyBlock
+          label="Billed To"
+          name={invoice.clientName}
+          lines={[invoice.clientEmail, ...splitLines(invoice.clientAddress)].filter(
+            Boolean
+          ) as string[]}
+          template={template}
+        />
       </section>
 
       <LineItemTable ctx={ctx} />
 
-      <section className="border-t border-black/10 pt-7">
-        <div className="grid gap-8 sm:grid-cols-[1.1fr_0.9fr]">
+      <section className="border-t border-stone-200 pt-6">
+        <div className="grid gap-6 sm:grid-cols-[1.1fr_0.9fr]">
           <SupportSections ctx={ctx} />
-          <div className="border-t border-black/10 pt-5 sm:border-t-0 sm:pl-8 sm:border-l sm:border-black/10 sm:pt-0">
+          <div className="border-t border-stone-200 pt-4 sm:border-t-0 sm:border-l sm:pl-6 sm:pt-0">
             <SummaryBlock ctx={ctx} large />
           </div>
         </div>
@@ -608,51 +572,38 @@ function renderContractor(ctx: PreviewContext) {
 
   return (
     <>
-      <header className="border-t-4 border-black pb-6 pt-4" style={{ borderTopColor: template.accent }}>
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+      <header className="border-t-4 border-stone-900 pb-5 pt-3" style={{ borderTopColor: template.accent }}>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <Label color={template.labelTone}>Contractor invoice</Label>
-            <h1
-              className={`mt-3 break-words text-[clamp(2rem,4vw,3rem)] font-semibold leading-[0.95] tracking-[-0.05em] ${template.previewHeadingClass}`}
-            >
-              {invoice.invoiceNumber || "Draft invoice"}
+            <Label color={template.labelTone}>Tax Invoice</Label>
+            <h1 className={`mt-2 text-2xl font-bold ${template.previewHeadingClass}`}>
+              {invoice.invoiceNumber || "Draft Invoice"}
             </h1>
           </div>
-          <div className="min-w-[260px]">
-            <div className="grid grid-cols-2 gap-x-5 gap-y-4 border-l border-black/10 pl-5 text-sm">
+          <div className="text-xs">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2 border-l border-stone-200 pl-4">
               <div>
                 <Label color={template.labelTone}>Issued</Label>
-                <p className={`mt-2 ${template.previewHeadingClass}`}>
-                  {invoice.issueDate || "-"}
-                </p>
+                <p className="font-semibold">{invoice.issueDate || "-"}</p>
               </div>
               <div>
                 <Label color={template.labelTone}>Due</Label>
-                <p className={`mt-2 ${template.previewHeadingClass}`}>
-                  {invoice.dueDate || "-"}
-                </p>
-              </div>
-              <div>
-                <Label color={template.labelTone}>Status</Label>
-                <p className={`mt-2 ${template.previewHeadingClass}`}>
-                  {invoice.status}
-                </p>
+                <p className="font-semibold">{invoice.dueDate || "-"}</p>
               </div>
               <div>
                 <Label color={template.labelTone}>Balance</Label>
-                <p className={`mt-2 font-semibold ${template.previewHeadingClass}`}>
-                  {formatMoney(ctx.total, invoice.currency)}
-                </p>
+                <p className="font-bold">{formatMoney(ctx.total, invoice.currency)}</p>
               </div>
             </div>
           </div>
         </div>
       </header>
 
-      <section className="grid gap-8 border-y border-black/10 py-6 sm:grid-cols-[1fr_1fr]">
+      <section className="grid gap-6 border-y border-stone-200 py-5 sm:grid-cols-2">
         <PartyBlock
           label="Supplier"
           name={invoice.businessName}
+          tin={invoice.businessTin}
           lines={[
             ...splitLines(invoice.businessAddress),
             invoice.businessEmail,
@@ -672,10 +623,10 @@ function renderContractor(ctx: PreviewContext) {
 
       <LineItemTable ctx={ctx} strongHeader compact />
 
-      <section className="grid gap-8 border-t border-black/10 pt-6 sm:grid-cols-[1fr_0.9fr]">
+      <section className="grid gap-6 border-t border-stone-200 pt-5 sm:grid-cols-[1fr_0.9fr]">
         <SupportSections ctx={ctx} compact />
-        <div className="sm:pl-8 sm:border-l sm:border-black/10">
-          <SummaryBlock ctx={ctx} heading="Settlement" />
+        <div className="sm:border-l sm:border-stone-200 sm:pl-6">
+          <SummaryBlock ctx={ctx} />
         </div>
       </section>
     </>
@@ -687,57 +638,28 @@ function renderStatement(ctx: PreviewContext) {
 
   return (
     <>
-      <header className="border-b border-black/10 pb-6">
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+      <header className="border-b border-stone-200 pb-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <Label color={template.labelTone}>Statement invoice</Label>
-            <p className={`mt-4 text-[1.2rem] font-semibold ${template.previewHeadingClass}`}>
+            <Label color={template.labelTone}>Statement Tax Invoice</Label>
+            <p className={`mt-2 text-base font-bold ${template.previewHeadingClass}`}>
               {invoice.businessName || "-"}
             </p>
           </div>
           <div className="text-left sm:text-right">
-            <Label color={template.labelTone}>Balance due</Label>
-            <p
-              className="mt-3 text-[2.2rem] font-semibold leading-none tracking-[-0.05em]"
-              style={{ color: template.accent }}
-            >
+            <Label color={template.labelTone}>Balance Due</Label>
+            <p className="mt-1 text-2xl font-bold" style={{ color: template.accent }}>
               {formatMoney(ctx.total, invoice.currency)}
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-6 grid gap-4 border-t border-black/10 pt-4 sm:grid-cols-4">
-          <div>
-            <Label color={template.labelTone}>Invoice no</Label>
-            <p className={`mt-2 text-sm ${template.previewHeadingClass}`}>
-              {invoice.invoiceNumber || "-"}
-            </p>
-          </div>
-          <div>
-            <Label color={template.labelTone}>Issued</Label>
-            <p className={`mt-2 text-sm ${template.previewHeadingClass}`}>
-              {invoice.issueDate || "-"}
-            </p>
-          </div>
-          <div>
-            <Label color={template.labelTone}>Due</Label>
-            <p className={`mt-2 text-sm ${template.previewHeadingClass}`}>
-              {invoice.dueDate || "-"}
-            </p>
-          </div>
-          <div>
-            <Label color={template.labelTone}>Status</Label>
-            <p className={`mt-2 text-sm ${template.previewHeadingClass}`}>
-              {invoice.status}
             </p>
           </div>
         </div>
       </header>
 
-      <section className="grid gap-8 border-b border-black/10 py-7 sm:grid-cols-[1fr_1fr]">
+      <section className="grid gap-6 border-b border-stone-200 py-5 sm:grid-cols-2">
         <PartyBlock
-          label="Supplier"
+          label="Billed By"
           name={invoice.businessName}
+          tin={invoice.businessTin}
           lines={[
             ...splitLines(invoice.businessAddress),
             invoice.businessEmail,
@@ -746,7 +668,7 @@ function renderStatement(ctx: PreviewContext) {
           template={template}
         />
         <PartyBlock
-          label="Account billed"
+          label="Billed To"
           name={invoice.clientName}
           lines={[invoice.clientEmail, ...splitLines(invoice.clientAddress)].filter(
             Boolean
@@ -757,10 +679,10 @@ function renderStatement(ctx: PreviewContext) {
 
       <LineItemTable ctx={ctx} compact />
 
-      <section className="grid gap-8 border-t border-black/10 pt-6 sm:grid-cols-[1fr_0.85fr]">
+      <section className="grid gap-6 border-t border-stone-200 pt-5 sm:grid-cols-[1fr_0.85fr]">
         <SupportSections ctx={ctx} compact signatureOnTop />
-        <div className="sm:pl-8 sm:border-l sm:border-black/10">
-          <SummaryBlock ctx={ctx} heading="Balance summary" />
+        <div className="sm:border-l sm:border-stone-200 sm:pl-6">
+          <SummaryBlock ctx={ctx} />
         </div>
       </section>
     </>
@@ -803,7 +725,7 @@ export default function InvoicePreview({
 
   return (
     <article
-      className={`mx-auto w-full max-w-[860px] bg-white px-6 py-7 shadow-[0_28px_80px_rgba(20,16,10,0.08)] sm:px-10 sm:py-10 ${className}`}
+      className={`mx-auto w-full max-w-[850px] bg-white p-6 shadow-md rounded-xl sm:p-10 ${className}`}
       style={{ backgroundColor: template.pageTone }}
     >
       {content}
