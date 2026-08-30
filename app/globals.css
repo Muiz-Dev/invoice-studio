@@ -16,6 +16,12 @@
   box-sizing: border-box;
 }
 
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -27,6 +33,22 @@ body {
   font-family: var(--font-space-grotesk), sans-serif;
   font-size: 15px;
   line-height: 1.6;
+}
+
+img,
+canvas,
+svg,
+video {
+  max-width: 100%;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 p,
