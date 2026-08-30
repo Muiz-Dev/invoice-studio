@@ -426,11 +426,11 @@ export default function StudioClient() {
 
   return (
     <>
-      <main className="min-h-screen bg-stone-100 pb-24 text-stone-900 sm:px-6 sm:py-8 lg:px-10">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-3 pt-4 sm:px-0 sm:pt-0">
+      <main className="min-h-screen max-w-full overflow-x-hidden bg-stone-100 pb-24 text-stone-900 px-3 py-4 sm:px-6 sm:py-8 lg:px-10">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 min-w-0">
 
           {/* Top Header */}
-          <header className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm sm:p-6">
+          <header className="w-full min-w-0 rounded-xl border border-stone-200 bg-white p-4 shadow-sm sm:p-6">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <Link
@@ -489,10 +489,10 @@ export default function StudioClient() {
             </div>
           </header>
 
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="grid gap-6 min-w-0 w-full lg:grid-cols-[minmax(0,1fr)_340px]">
 
             {/* Main Wizard Section */}
-            <section className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm sm:p-6">
+            <section className="min-w-0 w-full rounded-xl border border-stone-200 bg-white p-4 shadow-sm sm:p-6">
 
               {/* Stepper Header Navigation */}
               <div className="border-b border-stone-100 pb-5">
@@ -505,7 +505,7 @@ export default function StudioClient() {
                 </div>
 
                 {/* Step tabs (scrollable on mobile) */}
-                <div className="no-scrollbar flex overflow-x-auto pb-1 gap-1.5 sm:gap-2">
+                <div className="no-scrollbar flex w-full max-w-full min-w-0 overflow-x-auto pb-1 gap-1.5 sm:gap-2">
                   {steps.map((step, index) => {
                     const isActive = index === currentStep;
                     const isDone = index < currentStep;
@@ -1160,13 +1160,13 @@ export default function StudioClient() {
                       </div>
 
                       {signatureMode === "draw" ? (
-                        <div className="space-y-2">
-                          <div className="overflow-hidden rounded-lg border border-stone-300 bg-white">
+                        <div className="space-y-2 min-w-0 w-full">
+                          <div className="w-full min-w-0 overflow-hidden rounded-lg border border-stone-300 bg-white">
                             <SignatureCanvas
                               ref={signaturePadRef}
                               penColor="#111827"
                               canvasProps={{
-                                className: "h-28 w-full sm:h-32",
+                                className: "h-28 w-full max-w-full sm:h-32",
                                 width: 600,
                                 height: 140,
                               }}

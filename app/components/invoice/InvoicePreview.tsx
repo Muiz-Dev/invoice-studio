@@ -66,7 +66,7 @@ function PartyBlock({
   editorial?: boolean;
 }) {
   return (
-    <div>
+    <div className="min-w-0">
       <Label color={template.labelTone}>{label}</Label>
       <p
         className={`mt-3 break-words text-lg leading-tight ${
@@ -76,12 +76,12 @@ function PartyBlock({
         {name || "-"}
       </p>
       {tin ? (
-        <p className={`mt-1 text-xs font-mono font-medium ${template.previewBodyClass}`}>
+        <p className={`mt-1 text-xs font-mono font-medium break-all ${template.previewBodyClass}`}>
           TIN: {tin}
         </p>
       ) : null}
-      <div className={`mt-2 space-y-0.5 text-sm leading-relaxed ${template.previewBodyClass}`}>
-        {lines.length ? lines.map((line) => <p key={`${label}-${line}`}>{line}</p>) : <p>-</p>}
+      <div className={`mt-2 space-y-0.5 text-sm leading-relaxed break-words ${template.previewBodyClass}`}>
+        {lines.length ? lines.map((line) => <p key={`${label}-${line}`} className="break-words">{line}</p>) : <p>-</p>}
       </div>
     </div>
   );
@@ -101,47 +101,49 @@ function LineItemTable({
   const { template, items, invoice } = ctx;
 
   return (
-    <section className={compact ? "py-4" : "py-6"}>
-      <div
-        className={`grid grid-cols-[1.5fr_0.55fr_0.75fr_0.8fr] gap-4 pb-2.5 ${
-          strongHeader ? "border-y border-stone-200 py-2.5 px-3" : "border-b border-stone-200"
-        }`}
-        style={strongHeader ? { backgroundColor: template.accentSoft } : undefined}
-      >
-        <Label color={template.labelTone}>Description</Label>
-        <Label color={template.labelTone} className="text-right">
-          Qty
-        </Label>
-        <Label color={template.labelTone} className="text-right">
-          Rate
-        </Label>
-        <Label color={template.labelTone} className="text-right">
-          Amount
-        </Label>
-      </div>
+    <section className={`w-full overflow-x-auto min-w-0 ${compact ? "py-4" : "py-6"}`}>
+      <div className="min-w-[480px]">
+        <div
+          className={`grid grid-cols-[1.5fr_0.55fr_0.75fr_0.8fr] gap-3 pb-2.5 ${
+            strongHeader ? "border-y border-stone-200 py-2.5 px-3" : "border-b border-stone-200"
+          }`}
+          style={strongHeader ? { backgroundColor: template.accentSoft } : undefined}
+        >
+          <Label color={template.labelTone}>Description</Label>
+          <Label color={template.labelTone} className="text-right">
+            Qty
+          </Label>
+          <Label color={template.labelTone} className="text-right">
+            Rate
+          </Label>
+          <Label color={template.labelTone} className="text-right">
+            Amount
+          </Label>
+        </div>
 
-      <div className={openRows ? "space-y-3 pt-3" : "divide-y divide-stone-200/80"}>
-        {items.map((item) => (
-          <div
-            key={item.id}
-            className={`grid grid-cols-[1.5fr_0.55fr_0.75fr_0.8fr] gap-4 ${
-              openRows ? "" : "py-3"
-            }`}
-          >
-            <p className={`text-sm leading-relaxed font-medium ${template.previewHeadingClass}`}>
-              {item.description}
-            </p>
-            <p className={`text-right text-sm ${template.previewBodyClass}`}>
-              {item.quantity}
-            </p>
-            <p className={`text-right text-sm ${template.previewBodyClass}`}>
-              {formatMoney(item.rate, invoice.currency)}
-            </p>
-            <p className={`text-right text-sm font-semibold ${template.previewHeadingClass}`}>
-              {formatMoney(item.quantity * item.rate, invoice.currency)}
-            </p>
-          </div>
-        ))}
+        <div className={openRows ? "space-y-3 pt-3" : "divide-y divide-stone-200/80"}>
+          {items.map((item) => (
+            <div
+              key={item.id}
+              className={`grid grid-cols-[1.5fr_0.55fr_0.75fr_0.8fr] gap-3 ${
+                openRows ? "" : "py-3"
+              }`}
+            >
+              <p className={`text-sm leading-relaxed font-medium break-words ${template.previewHeadingClass}`}>
+                {item.description}
+              </p>
+              <p className={`text-right text-sm ${template.previewBodyClass}`}>
+                {item.quantity}
+              </p>
+              <p className={`text-right text-sm ${template.previewBodyClass}`}>
+                {formatMoney(item.rate, invoice.currency)}
+              </p>
+              <p className={`text-right text-sm font-semibold ${template.previewHeadingClass}`}>
+                {formatMoney(item.quantity * item.rate, invoice.currency)}
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -725,7 +727,7 @@ export default function InvoicePreview({
 
   return (
     <article
-      className={`mx-auto w-full max-w-[850px] bg-white p-6 shadow-md rounded-xl sm:p-10 ${className}`}
+      className={`mx-auto w-full max-w-[850px] min-w-0 overflow-hidden bg-white p-4 shadow-md rounded-xl sm:p-10 ${className}`}
       style={{ backgroundColor: template.pageTone }}
     >
       {content}
