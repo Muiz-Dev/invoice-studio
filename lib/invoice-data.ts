@@ -20,6 +20,7 @@ export type InvoiceDraft = {
   businessEmail: string;
   businessPhone: string;
   businessAddress: string;
+  businessTin: string;
   clientName: string;
   clientEmail: string;
   clientAddress: string;
@@ -31,6 +32,9 @@ export type InvoiceDraft = {
   notes: string;
   showNotes: boolean;
   paymentDetails: string;
+  bankName: string;
+  accountName: string;
+  accountNumber: string;
   showPaymentDetails: boolean;
   paymentReference: string;
   signatureName: string;
@@ -85,49 +89,52 @@ export const createItem = (overrides?: Partial<InvoiceItem>): InvoiceItem => ({
 
 export const buildDefaultInvoice = (): InvoiceDraft => ({
   status: "Draft",
-  currency: "USD",
+  currency: "NGN",
   businessName: "Mac Dev Studio",
   businessEmail: "hello@macdev.studio",
-  businessPhone: "+234 801 000 0000",
-  businessAddress: "Lagos, Nigeria",
+  businessPhone: "+234 801 234 5678",
+  businessAddress: "12 Commercial Avenue, Yaba, Lagos",
+  businessTin: "10293847-0001",
   clientName: "Atlas Product Team",
   clientEmail: "accounts@atlas.io",
-  clientAddress: "Remote, Global",
+  clientAddress: "Victoria Island, Lagos",
   invoiceNumber: "INV-2026-004",
   issueDate: todayIso(),
   dueDate: addDaysIso(14),
   serviceDate: todayIso(),
   paidDate: todayIso(),
   notes:
-    "Thank you for the trust. Payment is due within 14 days unless stated otherwise.",
+    "Thank you for your business. Payment is due within 14 days unless agreed otherwise.",
   showNotes: true,
-  paymentDetails:
-    "Bank: Zenith Bank | Account: 0123456789 | Name: Mac Dev Studio",
+  bankName: "Zenith Bank",
+  accountName: "Mac Dev Studio Ltd",
+  accountNumber: "1012345678",
+  paymentDetails: "Bank: Zenith Bank | Acc: 1012345678 | Name: Mac Dev Studio Ltd",
   showPaymentDetails: true,
   paymentReference: "",
-  signatureName: "Your Name",
-  signatureTitle: "Founder / Owner",
+  signatureName: "Adesanya Mac",
+  signatureTitle: "Founder / Lead Engineer",
   signatureDataUrl: "",
   showSignature: true,
   template: "ledger",
-  taxRate: 0,
+  taxRate: 7.5,
 });
 
 export const buildDefaultItems = (): InvoiceItem[] => [
   createItem({
-    description: "Product strategy and delivery",
+    description: "Web & Mobile App Architecture Sprint",
     quantity: 1,
-    rate: 1200,
+    rate: 1500000,
   }),
   createItem({
-    description: "UI implementation sprint",
+    description: "UI/UX Design & Prototyping",
     quantity: 1,
-    rate: 850,
+    rate: 750000,
   }),
   createItem({
-    description: "Post-launch support",
-    quantity: 2,
-    rate: 150,
+    description: "API Integration & Cloud Deployment",
+    quantity: 1,
+    rate: 500000,
   }),
 ];
 
@@ -252,6 +259,17 @@ export const sanitizeItem = (item: Partial<InvoiceItem>): InvoiceItem => ({
   rate: Number(item.rate ?? 0) || 0,
 });
 
+export const formatBankDetails = (invoice: Partial<InvoiceDraft>) => {
+  if (invoice.bankName || invoice.accountName || invoice.accountNumber) {
+    const parts = [];
+    if (invoice.bankName) parts.push(`Bank: ${invoice.bankName}`);
+    if (invoice.accountName) parts.push(`Account Name: ${invoice.accountName}`);
+    if (invoice.accountNumber) parts.push(`Account No: ${invoice.accountNumber}`);
+    return parts.join("\n");
+  }
+  return invoice.paymentDetails || "";
+};
+
 export const hydrateInvoiceDraft = (
   parsed?: Partial<InvoiceDraft>
 ): InvoiceDraft => {
@@ -259,7 +277,11 @@ export const hydrateInvoiceDraft = (
   return {
     ...defaults,
     ...parsed,
-    taxRate: Number(parsed?.taxRate ?? defaults.taxRate) || 0,
+    businessTin: parsed?.businessTin ?? defaults.businessTin,
+    bankName: parsed?.bankName ?? defaults.bankName,
+    accountName: parsed?.accountName ?? defaults.accountName,
+    accountNumber: parsed?.accountNumber ?? defaults.accountNumber,
+    taxRate: parsed?.taxRate !== undefined ? Number(parsed.taxRate) || 0 : defaults.taxRate,
     paymentDetails: parsed?.paymentDetails ?? defaults.paymentDetails,
     paymentReference: parsed?.paymentReference ?? defaults.paymentReference,
     notes: parsed?.notes ?? defaults.notes,
@@ -277,14 +299,28 @@ export const hydrateInvoiceDraft = (
 };
 
 export const formatMoney = (value: number, currency?: string) => {
-  const safeCurrency = currency || "USD";
+  const safeCurrency = currency || "NGN";
   try {
+    if (safeCurrency === "NGN") {
+      return new Intl.NumberFormat("en-NG", {
+        style: "currency",
+        currency: "NGN",
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(value);
+    }
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: safeCurrency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(value);
   } catch {
-    return `${safeCurrency} ${value.toFixed(2)}`;
+    const symbol = safeCurrency === "NGN" ? "₦" : `${safeCurrency} `;
+    return `${symbol}${value.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
   }
 };
 
